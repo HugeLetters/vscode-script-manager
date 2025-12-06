@@ -1,6 +1,10 @@
+import { Console as NodeConsole } from "node:console";
+import { Writable } from "node:stream";
+import { type InspectOptions, inspect } from "node:util";
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 import * as Fn from "effect/Function";
+import * as Predicate from "effect/Predicate";
 
 export namespace ConsoleUtils {
 	export function fromUnsafe(unsafe: Console.UnsafeConsole): Console.Console {
@@ -63,6 +67,22 @@ export namespace ConsoleUtils {
 		};
 	}
 
+	export function createConsole(write: (message: string) => void) {
+		const stream = new Writable({
+			write(chunk, _, callback) {
+				if (chunk instanceof Buffer) {
+					write(chunk.toString());
+					return callback(null);
+				}
+
+				write(format(chunk));
+				return callback(null);
+			},
+		});
+
+		return new NodeConsole(stream);
+	}
+
 	export const noop: Console.UnsafeConsole = {
 		assert: Fn.constVoid,
 		count: Fn.constVoid,
@@ -83,5 +103,19 @@ export namespace ConsoleUtils {
 		trace: Fn.constVoid,
 		warn: Fn.constVoid,
 		clear: Fn.constVoid,
+	};
+
+	function format(value: unknown) {
+		if (Predicate.isString(value)) {
+			return value;
+		}
+
+		return inspect(value, DefaultInspectOptions);
+	}
+
+	const DefaultInspectOptions: InspectOptions = {
+		depth: 5,
+		numericSeparator: true,
+		sorted: true,
 	};
 }
