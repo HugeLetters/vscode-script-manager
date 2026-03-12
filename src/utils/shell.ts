@@ -4,7 +4,6 @@ import * as Arr from "effect/Array";
 import * as Console from "effect/Console";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
-import * as Iterable from "effect/Iterable";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
 import * as Str from "effect/String";
@@ -24,7 +23,6 @@ export namespace CommandUtils {
 			return `${format(piped.left)} | ${format(piped.right)}`;
 		}),
 		Match.tag("StandardCommand", (command) => {
-			Iterable.isEmpty;
 			if (Arr.isEmptyReadonlyArray(command.args)) {
 				return command.command;
 			}
