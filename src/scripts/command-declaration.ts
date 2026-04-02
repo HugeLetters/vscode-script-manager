@@ -15,6 +15,7 @@ import {
 import { CommandPrefix } from "$/config";
 import { TsMorph } from "$/service/tsmorph";
 import { StringUtils } from "$/utils/string";
+import type { VsCommand } from "$/vscode/command";
 import type { CommandDeclaration } from "./package-json";
 
 const CommandsVariable = "Commands";
@@ -159,9 +160,15 @@ const getCommandMetadata = Effect.fn("getCommandMetadata")(function* (
 		}),
 		Effect.flatMap(
 			Effect.fnUntraced(function* (arg) {
-				const id = yield* getStringLiteralProperty(arg, "id");
-				const name = yield* getStringLiteralProperty(arg, "name");
-				const when = yield* getOptionalStringLiteralProperty(arg, "when");
+				const id = yield* getStringLiteralProperty<CommandProperty>(arg, "id");
+				const name = yield* getStringLiteralProperty<CommandProperty>(
+					arg,
+					"name",
+				);
+				const when = yield* getOptionalStringLiteralProperty<CommandProperty>(
+					arg,
+					"when",
+				);
 
 				const result: CommandDeclaration = {
 					command: `${prefix}.${id}`,
@@ -176,8 +183,10 @@ const getCommandMetadata = Effect.fn("getCommandMetadata")(function* (
 	);
 });
 
+type CommandProperty = keyof VsCommand.AnyCommand;
+
 const getStringLiteralProperty = Effect.fn("getStringLiteralProperty ")(
-	function* (node: ObjectLiteralExpression, key: string) {
+	function* <T extends string>(node: ObjectLiteralExpression, key: T) {
 		return yield* getOptionalStringLiteralProperty(node, key).pipe(
 			Effect.flatMap(
 				Option.match({
@@ -199,7 +208,7 @@ const getStringLiteralProperty = Effect.fn("getStringLiteralProperty ")(
 
 const getOptionalStringLiteralProperty = Effect.fn(
 	"getOptionalStringLiteralProperty",
-)(function* (node: ObjectLiteralExpression, key: string) {
+)(function* <T extends string>(node: ObjectLiteralExpression, key: T) {
 	const value = node.getProperty(key);
 	if (!value) {
 		return yield* Effect.succeed(Option.none<string>());
