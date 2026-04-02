@@ -14,10 +14,19 @@ const CommandDeclaration = looseStruct({
 
 export type CommandDeclaration = typeof CommandDeclaration.Type;
 
+const Contributes = looseStruct({
+	commands: Schema.Array(CommandDeclaration),
+}).pipe(Schema.annotations({ identifier: "Contributes" }));
+
+export type Contributes = typeof Contributes.Type;
+
+const ActivationEvents = Schema.Array(Schema.String).pipe(
+	Schema.annotations({ identifier: "ActivationEvents" }),
+);
+
 const PackageJsonFromSelf = looseStruct({
-	contributes: looseStruct({
-		commands: Schema.Array(CommandDeclaration),
-	}).pipe(Schema.annotations({ identifier: "Contributes" })),
+	contributes: Contributes,
+	activationEvents: ActivationEvents.pipe(Schema.optional),
 });
 
 export const PackageJson = Schema.parseJson(PackageJsonFromSelf).pipe(

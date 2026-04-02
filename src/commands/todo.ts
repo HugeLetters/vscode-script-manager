@@ -4,10 +4,10 @@ import * as Option from "effect/Option";
 import { Selection } from "vscode";
 import { Git } from "$/service/git";
 import { StringUtils } from "$/utils/string";
-import { VsCommand } from "$/vscode/command";
+import { Command } from "$/vscode/command";
 import { TextEditor } from "$/vscode/editor";
 
-export const InsertTodoComment = new VsCommand.TextCommand({
+export const InsertTodoComment = new Command.TextCommand({
 	id: "insert-todo-comment",
 	name: "Todo Comment",
 	task: Effect.gen(function* () {
@@ -50,6 +50,6 @@ export const InsertTodoComment = new VsCommand.TextCommand({
 			new Selection(descriptionPosition, descriptionPosition),
 		);
 
-		yield* VsCommand.execute("editor.action.addCommentLine");
+		yield* Command.execute("editor.action.addCommentLine");
 	}).pipe(Effect.provide([Git.Default])),
 });

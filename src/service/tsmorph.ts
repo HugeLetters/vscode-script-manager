@@ -1,13 +1,9 @@
 import * as Path from "@effect/platform/Path";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import { type Node, Project } from "ts-morph";
 import { asError } from "$/utils/error";
-
-interface TsMorphLiveConfig {
-	/** @private */
-	readonly project: Project;
-}
 
 export class TsMorph extends Effect.Service<TsMorph>()(
 	"script-manager/tsmorph/TsMorph",
@@ -34,27 +30,47 @@ export class TsMorph extends Effect.Service<TsMorph>()(
 				},
 			});
 
-			const result: TsMorphLiveConfig = { project };
-			return result;
+			return { project };
 		}),
 	},
 ) {
-	use = Effect.fn("use")(<T>(run: (project: Project) => PromiseLike<T> | T) => {
-		return Effect.tryPromise({
-			try: async () => {
-				return run(this.project);
-			},
-			catch(error) {
-				return new TsMorphError({ cause: error });
-			},
-		});
+	static with = Effect.fn("use")(
+		<T>(run: (project: Project) => PromiseLike<T> | T) => {
+			return TsMorph.use((tsmorph) =>
+				Effect.tryPromise({
+					try: async () => {
+						return run(tsmorph.project);
+					},
+					catch(error) {
+						return new TsMorphError({ cause: error });
+					},
+				}),
+			);
+		},
+	);
+
+	static addSourceFile = Effect.fn("addSourceFile")((filePath: string) => {
+		return TsMorph.with((project) => project.addSourceFileAtPath(filePath));
 	});
 
-	addSourceFile = Effect.fn("addSourceFile")((filePath: string) => {
-		return this.use((project) => {
-			return project.addSourceFileAtPath(filePath);
-		});
-	});
+	static InMemory = Layer.effect(
+		TsMorph,
+		Effect.gen(function* () {
+			const project = yield* Effect.try({
+				try() {
+					return new Project({ useInMemoryFileSystem: true });
+				},
+				catch(error) {
+					return new TsMorphError({ cause: error });
+				},
+			});
+
+			return {
+				_tag: "script-manager/tsmorph/TsMorph",
+				project,
+			};
+		}),
+	);
 }
 
 export namespace TsMorph {

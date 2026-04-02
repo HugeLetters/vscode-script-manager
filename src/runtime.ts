@@ -17,11 +17,14 @@ export type SharedRuntimeContext = Layer.Layer.Success<
 
 export const Runtime = FiberSet.makeRuntime<SharedRuntimeContext>().pipe(
 	Effect.map(
-		(run) => (effect: Effect.Effect<void, unknown, SharedRuntimeContext>) =>
-			effect.pipe(
-				Effect.tapErrorCause(Effect.logFatal),
-				run,
-				Effect.runPromise,
-			),
+		(run) =>
+			<T>(effect: Effect.Effect<T, unknown, SharedRuntimeContext>) =>
+				effect.pipe(
+					Effect.tapErrorCause(Effect.logFatal),
+					run,
+					Effect.runPromise,
+				),
 	),
 );
+
+export type Runtime = Effect.Effect.Success<typeof Runtime>;

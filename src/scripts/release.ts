@@ -5,8 +5,9 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { CommandUtils } from "$/utils/shell";
-import { ExtractCommandDeclaration } from "./command-declaration";
-import { PackageJson } from "./package-json";
+import { GetActivationEvents } from "./package-json/activationEvents";
+import { GetContributes } from "./package-json/contributes";
+import { PackageJson } from "./package-json/schema";
 
 const UpdatePackageJson = Effect.gen(function* () {
 	yield* Effect.logInfo("Updating package.json");
@@ -17,21 +18,18 @@ const UpdatePackageJson = Effect.gen(function* () {
 		.readFileString("package.json")
 		.pipe(Effect.flatMap(Schema.decode(PackageJson)));
 
-	const commands = yield* ExtractCommandDeclaration;
-
-	yield* Effect.log(
-		"Declared commands",
-		commands.map((command) => command.title),
-	);
+	const contributes = yield* GetContributes;
+	const activationEvents = yield* GetActivationEvents;
 
 	yield* pipe(
 		PackageJsonContent,
 		(file): PackageJson => {
 			return {
 				...file,
+				activationEvents,
 				contributes: {
 					...file.contributes,
-					commands: [...commands],
+					...contributes,
 				},
 			};
 		},

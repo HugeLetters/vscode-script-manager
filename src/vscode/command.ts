@@ -9,7 +9,7 @@ import type { CurrentDirectory } from "$/service/directory";
 import { asError } from "$/utils/error";
 import { TextEditor } from "$/vscode/editor";
 
-export namespace VsCommand {
+export namespace Command {
 	interface CommandConfig<C = never> {
 		readonly id: string;
 		readonly name: string;
@@ -65,7 +65,7 @@ export namespace VsCommand {
 				return commands.executeCommand(command);
 			},
 			catch(error) {
-				return new VsCommandError({ cause: error });
+				return new CommandError({ cause: error });
 			},
 		});
 	});
@@ -75,14 +75,14 @@ export namespace VsCommand {
 			return Effect.tryPromise({
 				try: async () => run(),
 				catch(error) {
-					return new VsCommandError({ cause: error });
+					return new CommandError({ cause: error });
 				},
 			});
 		},
 	);
 }
 
-export class VsCommandError extends Data.TaggedError("VsCommandError")<{
+export class CommandError extends Data.TaggedError("CommandError")<{
 	cause: unknown;
 }> {
 	override message = asError(this.cause).message;

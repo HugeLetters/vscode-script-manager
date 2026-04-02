@@ -15,7 +15,6 @@
 		"url": "https://github.com/HugeLetters/script-manager"
 	},
 	"main": "./dist/index.js",
-	"activationEvents": [],
 	"scripts": {
 		"build": "bun run src/scripts/run/build.ts",
 		"release": "bun run src/scripts/run/release.ts",
@@ -51,5 +50,11 @@
 				"title": "Todo Comment"
 			}
 		]
-	}
+	},
+	"activationEvents": [
+		"onLanguage:javascript",
+		"onLanguage:javascriptreact",
+		"onLanguage:typescript",
+		"onLanguage:typescriptreact"
+	]
 }
