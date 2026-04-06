@@ -79,7 +79,6 @@ export namespace CodeAction {
 									Effect.allWith(),
 									Effect.raceFirst(TokenCancellationEffect),
 									Effect.map(Arr.filter(Predicate.isNotNull)),
-									// Effect.orElseSucceed(() => []),
 									run,
 								);
 							},
