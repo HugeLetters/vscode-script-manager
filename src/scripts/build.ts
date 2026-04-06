@@ -36,6 +36,7 @@ const BuildTimePlugin = Effect.fn("BuildTimePlugin ")(function* () {
 			const start = yield* startTime;
 			const now = yield* DateTime.now;
 			const elapsed = now.epochMillis - start.epochMillis;
+			// TODO master | more noticeable message | by Evgenii Perminov at Mon, 06 Apr 2026 20:47:37 GMT
 			yield* Effect.logInfo(`Build completed in ${elapsed}ms`);
 		}),
 	});

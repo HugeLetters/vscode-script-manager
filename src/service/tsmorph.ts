@@ -14,6 +14,7 @@ export class TsMorph extends Effect.Service<TsMorph>()(
 			const path = yield* Path.Path;
 
 			const tsConfig = path.resolve(
+				// TODO master | vscode uses cjs, replace with inMemory later, move this implementation to build scripts  | by Evgenii Perminov at Mon, 06 Apr 2026 20:26:19 GMT
 				import.meta.dir,
 				"..",
 				"..",

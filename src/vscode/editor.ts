@@ -33,6 +33,7 @@ export class TextEditor extends Effect.Service<TextEditor>()(
 		},
 	);
 
+	// TODO master | should fail on result = false instead | by Evgenii Perminov at Mon, 06 Apr 2026 20:48:50 GMT
 	edit = Effect.fn("edit")(
 		effectify(
 			this.service.edit,

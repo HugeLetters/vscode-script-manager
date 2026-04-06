@@ -26,6 +26,7 @@ const CommandsVariable = "Commands";
 export const GetCommands = Effect.gen(function* () {
 	const path = yield* Path.Path;
 
+	// we resort to this cause commands/etc import 'vscode' module which doesnt exist for us
 	const commandsDir = path.resolve(import.meta.dir, "..", "..", "commands");
 	const commandsPath = path.join(commandsDir, "index.ts");
 

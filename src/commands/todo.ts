@@ -32,6 +32,7 @@ export const InsertTodoComment = new Command.TextCommand({
 			Effect.map(Option.map((b) => `${b.current} `)),
 			Effect.map(Option.getOrElse(() => null)),
 		);
+		// TODO master | make this configurable | by Evgenii Perminov at Mon, 06 Apr 2026 21:17:28 GMT
 		const preDescrptionChunk = StringUtils.template`TODO ${branch}| `;
 		yield* editor.insert(
 			lineStartPosition,
