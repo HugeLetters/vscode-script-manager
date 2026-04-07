@@ -33,12 +33,18 @@ export class TextEditor extends Effect.Service<TextEditor>()(
 		},
 	);
 
-	// TODO master | should fail on result = false instead | by Evgenii Perminov at Mon, 06 Apr 2026 20:48:50 GMT
 	edit = Effect.fn("edit")(
 		effectify(
 			this.service.edit,
 			(error) => new TextEditorError({ cause: error }),
 		),
+		Effect.flatMap((result) => {
+			if (result) {
+				return Effect.void;
+			}
+
+			return new TextEditorError({ cause: "Failed to apply edits" });
+		}),
 	);
 
 	insert = Effect.fn("insert")(
