@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as SynchronizedRef from "effect/SynchronizedRef";
 import { context, type Plugin } from "esbuild";
-import { TsMorph } from "$/service/tsmorph";
+import { TsMorphProjectLive } from "./package-json/utils/tsmorph";
 import { makePlugin } from "./plugin";
 import { Release } from "./release";
 
@@ -16,7 +16,7 @@ const Outdir = "dist";
 const ReleasePlugin = makePlugin({
 	name: "release",
 	onStart: Release.Prebuild.pipe(
-		Effect.provide([Layer.provideMerge(TsMorph.Default, BunContext.layer)]),
+		Effect.provide([Layer.provideMerge(TsMorphProjectLive, BunContext.layer)]),
 	),
 	onEnd: () => Release.Postbuild,
 });

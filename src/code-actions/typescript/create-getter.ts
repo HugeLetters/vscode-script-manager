@@ -59,7 +59,7 @@ export const CreateGetter = new CodeAction({
 		action.edit = edit;
 
 		return action;
-	}, Effect.provide(TsMorph.InMemory)),
+	}, Effect.provide(TsMorph.Default)),
 });
 
 function isCursorOnPropertyKey(

@@ -1,18 +1,21 @@
+import * as Path from "@effect/platform/Path";
 import { pipe } from "effect";
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Iterable from "effect/Iterable";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import {
 	type ArgumentedNode,
 	type Expression,
 	type Node,
 	type ObjectLiteralExpression,
+	Project,
 	type SourceFile,
 	SyntaxKind,
 	type VariableDeclaration,
 } from "ts-morph";
-import { TsMorph } from "$/service/tsmorph";
+import { TsMorph, TsMorphError } from "$/service/tsmorph";
 import { StringUtils } from "$/utils/string";
 
 export const getVariableValue = Effect.fn("getVariableValue")(function* (
@@ -207,4 +210,37 @@ export const getObjectLiteralFirstArg = Effect.fn("getObjectLiteralFirstArg")(
 			}),
 		);
 	},
+);
+
+export const TsMorphProjectLive = Layer.effect(
+	TsMorph,
+	Effect.gen(function* () {
+		yield* Effect.log("Initializing ts-morph service");
+
+		const path = yield* Path.Path;
+
+		const tsConfig = path.resolve(
+			import.meta.dir,
+			"..",
+			"..",
+			"..",
+			"..",
+			"tsconfig.json",
+		);
+		const project = yield* Effect.try({
+			try() {
+				return new Project({
+					tsConfigFilePath: tsConfig,
+				});
+			},
+			catch(error) {
+				return new TsMorphError({ cause: error });
+			},
+		});
+
+		return {
+			_tag: "script-manager/tsmorph/TsMorph",
+			project,
+		};
+	}),
 );
