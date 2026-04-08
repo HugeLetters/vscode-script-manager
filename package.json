@@ -44,7 +44,20 @@
 		"typescript": "^5.9.3"
 	},
 	"contributes": {
+		"menus": {
+			"editor/title/context": [
+				{
+					"command": "script-manager.rename-tab",
+					"when": "resourceScheme == file",
+					"group": "navigation"
+				}
+			]
+		},
 		"commands": [
+			{
+				"command": "script-manager.rename-tab",
+				"title": "Rename Tab"
+			},
 			{
 				"command": "script-manager.insert-todo-comment",
 				"title": "Todo Comment"

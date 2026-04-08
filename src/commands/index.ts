@@ -2,9 +2,13 @@ import { pipe } from "effect";
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import { Command } from "$/vscode/command";
+import { RenameTab } from "./rename-tab";
 import { InsertTodoComment } from "./todo";
 
-const Commands: ReadonlyArray<Command.AnyCommand> = [InsertTodoComment];
+const Commands: ReadonlyArray<Command.AnyCommand> = [
+	InsertTodoComment,
+	RenameTab,
+];
 
 export const RegisterCommands = Effect.gen(function* () {
 	const registered = yield* pipe(
