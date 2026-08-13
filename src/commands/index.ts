@@ -1,5 +1,3 @@
-import { pipe } from "effect";
-import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import { Command } from "$/vscode/command";
 import { RenameTab } from "./rename-tab";
@@ -11,29 +9,20 @@ const Commands: ReadonlyArray<Command.AnyCommand> = [
 ];
 
 export const RegisterCommands = Effect.gen(function* () {
-	const registered = yield* pipe(
+	const registered = yield* Effect.partition(
 		Commands,
-		Arr.map((command) =>
-			pipe(
-				command,
-				(command) => {
-					if (command._tag === "TextCommand") {
-						return Command.registerTextCommand(command);
-					}
-
-					return Command.registerCommand(command);
-				},
-				Effect.tapError((cause) =>
-					Effect.logError(`Failed to register command ${command.id}`, cause),
+		(command) => {
+			return Command.registerAnyCommand(command).pipe(
+				Effect.tapError((error) =>
+					Effect.logError(`Failed to register command ${command.id}`, error),
 				),
 				Effect.map((disposable) => {
 					return { command, disposable };
 				}),
-			),
-		),
-		Effect.allWith({ concurrency: "unbounded", mode: "either" }),
-		Effect.map(Arr.getRights),
-	);
+			);
+		},
+		{ concurrency: "unbounded" },
+	).pipe(Effect.map(([_, registered]) => registered));
 
 	yield* Effect.log(
 		"Registered commands",

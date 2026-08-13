@@ -1,10 +1,11 @@
-import * as Path from "@effect/platform/Path";
 import { pipe } from "effect";
 import * as Arr from "effect/Array";
+import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Iterable from "effect/Iterable";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Path from "effect/Path";
 import {
 	type ArgumentedNode,
 	type Expression,
@@ -30,10 +31,8 @@ export const getVariableValue = Effect.fn("getVariableValue")(function* (
 		),
 		Effect.flatMap((variable) => {
 			if (!variable) {
-				return Effect.fail(
-					new Error(
-						`${path} does not contain a variable declaration '${name}'`,
-					),
+				return new TsMorphParseError(
+					`${path} does not contain a variable declaration '${name}'`,
 				);
 			}
 
@@ -42,8 +41,8 @@ export const getVariableValue = Effect.fn("getVariableValue")(function* (
 		Effect.flatMap((variable) => {
 			const initializer = variable.getInitializer();
 			if (!initializer) {
-				return Effect.fail(
-					new Error(`${getNodeLocator(variable)} does not have an initializer`),
+				return new TsMorphParseError(
+					`${getNodeLocator(variable)} does not have an initializer`,
 				);
 			}
 
@@ -55,8 +54,8 @@ export const getVariableValue = Effect.fn("getVariableValue")(function* (
 export const getVariableArrayElements = Effect.fn("getVariableArrayElements")(
 	function* (variable: Expression) {
 		if (!variable.isKind(SyntaxKind.ArrayLiteralExpression)) {
-			return yield* Effect.fail(
-				new Error(`${getNodeLocator(variable)} is not an array literal`),
+			return yield* new TsMorphParseError(
+				`${getNodeLocator(variable)} is not an array literal`,
 			);
 		}
 
@@ -80,7 +79,7 @@ export const getNodeNewExpressionInitializers = Effect.fn(
 			Arr.fromIterable,
 		);
 
-		if (Arr.isNonEmptyReadonlyArray(expressions)) {
+		if (Arr.isReadonlyArrayNonEmpty(expressions)) {
 			return expressions;
 		}
 	}
@@ -89,7 +88,7 @@ export const getNodeNewExpressionInitializers = Effect.fn(
 		`Invalid declaration ${getNodeLocator(element)}\n`,
 		"Only direct imports of variables with initializers or inline initializers are supported",
 	);
-	return yield* Effect.fail(new Error(errMessage));
+	return yield* new TsMorphParseError(errMessage);
 });
 
 export const getOptionalPropertyValue = Effect.fn("getOptionalPropertyValue")(
@@ -101,18 +100,16 @@ export const getOptionalPropertyValue = Effect.fn("getOptionalPropertyValue")(
 
 		if (!value.isKind(SyntaxKind.PropertyAssignment)) {
 			const location = TsMorph.getNodeLocation(value);
-			return yield* Effect.fail(
-				new Error(
-					`Property '${key}' at ${location} is not a property assignment`,
-				),
+			return yield* new TsMorphParseError(
+				`Property '${key}' at ${location} is not a property assignment`,
 			);
 		}
 
 		const init = value.getInitializer();
 		if (!init) {
 			const location = TsMorph.getNodeLocation(value);
-			return yield* Effect.fail(
-				new Error(`Property '${key}' at ${location} has no initializer`),
+			return yield* new TsMorphParseError(
+				`Property '${key}' at ${location} has no initializer`,
 			);
 		}
 
@@ -126,8 +123,8 @@ export const getPropertyValue = Effect.fn("getPropertyValue")(function* <
 	const value = yield* getOptionalPropertyValue(node, key);
 	return yield* Option.match(value, {
 		onNone() {
-			return Effect.fail(
-				new Error(`${getNodeLocator(node)} has no property '${key}'`),
+			return new TsMorphParseError(
+				`${getNodeLocator(node)} has no property '${key}'`,
 			);
 		},
 		onSome(value) {
@@ -157,7 +154,7 @@ export const getStringLiteralProperty = Effect.fn("getStringLiteralProperty")(
 );
 
 function getVariableNewExpression(variable: VariableDeclaration) {
-	return Option.fromNullable(variable.getInitializer()).pipe(
+	return Option.fromNullishOr(variable.getInitializer()).pipe(
 		Option.filter((initializer) =>
 			initializer.isKind(SyntaxKind.NewExpression),
 		),
@@ -176,8 +173,8 @@ export const asStringLiteral = Effect.fn("asStringLiteral")(function* (
 		return literalValue;
 	}
 
-	return yield* Effect.fail(
-		new Error(`${getNodeLocator(node)} is not a literal string`),
+	return yield* new TsMorphParseError(
+		`${getNodeLocator(node)} is not a literal string`,
 	);
 });
 
@@ -192,21 +189,21 @@ export const getObjectLiteralFirstArg = Effect.fn("getObjectLiteralFirstArg")(
 		return yield* pipe(
 			node.getArguments(),
 			Arr.get(0),
-			Effect.catchTag("NoSuchElementException", () => {
-				return Effect.fail(
-					new Error(`${getNodeLocator(node)} is missing first argument`),
-				);
-			}),
-			Effect.flatMap((arg) => {
-				if (!arg.isKind(SyntaxKind.ObjectLiteralExpression)) {
-					return Effect.fail(
-						new Error(
-							`First argument ${getNodeLocator(arg)} is not an object literal`,
-						),
+			Option.match({
+				onNone() {
+					return new TsMorphParseError(
+						`${getNodeLocator(node)} is missing first argument`,
 					);
-				}
+				},
+				onSome(arg) {
+					if (!arg.isKind(SyntaxKind.ObjectLiteralExpression)) {
+						return new TsMorphParseError(
+							`First argument ${getNodeLocator(arg)} is not an object literal`,
+						);
+					}
 
-				return Effect.succeed(arg);
+					return Effect.succeed(arg);
+				},
 			}),
 		);
 	},
@@ -244,3 +241,11 @@ export const TsMorphProjectLive = Layer.effect(
 		};
 	}),
 );
+
+class TsMorphParseError extends Data.TaggedError("TsMorphParseError")<{
+	readonly message: string;
+}> {
+	constructor(message: string) {
+		super({ message });
+	}
+}

@@ -1,4 +1,3 @@
-import * as Path from "@effect/platform/Path";
 import { pipe } from "effect";
 import * as Arr from "effect/Array";
 import * as Data from "effect/Data";
@@ -6,6 +5,7 @@ import * as Effect from "effect/Effect";
 import * as HashSet from "effect/HashSet";
 import * as Iterable from "effect/Iterable";
 import * as Option from "effect/Option";
+import * as Path from "effect/Path";
 import {
 	type NewExpression,
 	type ObjectLiteralExpression,
@@ -53,7 +53,7 @@ export const GetActionDeclarations = Effect.gen(function* () {
 	const providerInitializers = yield* pipe(
 		providerElements,
 		Arr.map(getNodeNewExpressionInitializers),
-		Effect.allWith({ concurrency: "unbounded" }),
+		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 		Effect.map(Iterable.flatten<NewExpression>),
 	);
 
@@ -61,7 +61,7 @@ export const GetActionDeclarations = Effect.gen(function* () {
 		providerInitializers,
 		(items) => HashSet.make(...items),
 		Iterable.map(getActionProviderMetadata),
-		Effect.allWith({ concurrency: "unbounded" }),
+		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 	);
 });
 
@@ -132,7 +132,7 @@ const getSelectorLanguages = Effect.fn("getSelectorLanguages")(function* (
 				);
 			}),
 		),
-		Effect.allWith({ concurrency: "unbounded" }),
+		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 		Effect.map(Iterable.flatten<string>),
 	);
 

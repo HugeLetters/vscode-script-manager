@@ -1,16 +1,13 @@
+import * as Context from "effect/Context";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import { type SimpleGit, simpleGit } from "simple-git";
 import { asError } from "../utils/error";
 import { CurrentDirectory } from "./directory";
 
-interface GitLiveConfig {
-	/** @private */
-	readonly service: SimpleGit;
-}
-
-export class Git extends Effect.Service<Git>()("script-manager/git/Git", {
-	effect: Effect.gen(function* () {
+export class Git extends Context.Service<Git>()("script-manager/git/Git", {
+	make: Effect.gen(function* () {
 		const dirname = yield* CurrentDirectory;
 		yield* Effect.log("Initiating git service", { dirname });
 
@@ -22,14 +19,19 @@ export class Git extends Effect.Service<Git>()("script-manager/git/Git", {
 				return new GitError({ cause: error });
 			},
 		});
-		const result: GitLiveConfig = { service };
-		return result;
+
+		return service;
 	}),
 }) {
-	use = Effect.fn("use")(<T>(run: (git: SimpleGit) => PromiseLike<T> | T) => {
-		return Effect.tryPromise({
+	static readonly Default = Layer.effect(Git, Git.make);
+
+	static with = Effect.fn("with")(function* <T>(
+		run: (git: SimpleGit) => PromiseLike<T> | T,
+	) {
+		const git = yield* Git;
+		return yield* Effect.tryPromise({
 			try: async () => {
-				return run(this.service);
+				return run(git);
 			},
 			catch(error) {
 				return new GitError({ cause: error });
@@ -37,7 +39,7 @@ export class Git extends Effect.Service<Git>()("script-manager/git/Git", {
 		});
 	});
 
-	branch = this.use((git) => git.branch()).pipe(Effect.option);
+	static Branch = Git.with((git) => git.branch()).pipe(Effect.option);
 }
 
 export class GitError extends Data.TaggedError("GitError")<{

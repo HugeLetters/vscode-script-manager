@@ -18,22 +18,22 @@ export function activate(context: ExtensionContext) {
 		yield* Effect.log("Activated");
 
 		const deferredDisposables =
-			yield* Deferred.make<Effect.Effect.Success<typeof RegisterAll>>();
+			yield* Deferred.make<Effect.Success<typeof RegisterAll>>();
 
-		// TODO master | this fiber is only killed on process exit, not when deactive requested explicitly | by Evgenii Perminov at Mon, 06 Apr 2026 21:16:13 GMT
+		// TODO master | this fiber is only killed on process exit, not when deactive requested explicitly | by Evgenii Perminov at Mon, 06 Apr 2026 21:13:25 GMT
 		yield* RegisterAll.pipe(
 			Effect.flatMap((v) => Deferred.succeed(deferredDisposables, v)),
 			Effect.andThen(Effect.never),
 			Effect.scoped,
-			Effect.tapErrorCause(Effect.logFatal),
-			Effect.forkDaemon,
+			Effect.tapCause(Effect.logFatal),
+			Effect.forkDetach,
 		);
 
 		const commands = yield* Deferred.await(deferredDisposables);
 		context.subscriptions.push(...commands);
 	}).pipe(
 		Effect.provide(SharedRuntimeLive),
-		Effect.tapErrorCause(Effect.logFatal),
+		Effect.tapCause(Effect.logFatal),
 		Effect.runPromise,
 	);
 }

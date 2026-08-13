@@ -1,5 +1,3 @@
-import { pipe } from "effect";
-import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import { CodeAction } from "$/vscode/code-action";
 import { TypescriptCodeActions } from "./typescript";
@@ -9,26 +7,23 @@ const CodeActionProviders: ReadonlyArray<CodeAction.Provider> = [
 ];
 
 export const RegisterCodeActionProviders = Effect.gen(function* () {
-	const registered = yield* pipe(
+	const registered = yield* Effect.partition(
 		CodeActionProviders,
-		Arr.map((provider) =>
-			pipe(
-				provider,
-				CodeAction.Provider.registerCodeProvider,
-				Effect.tapError((cause) =>
-					Effect.logError(
+		(provider) => {
+			return CodeAction.Provider.registerCodeProvider(provider).pipe(
+				Effect.tapError((error) => {
+					return Effect.logError(
 						`Failed to register code action provider ${provider.id}`,
-						cause,
-					),
-				),
+						error,
+					);
+				}),
 				Effect.map((disposable) => {
 					return { provider, disposable };
 				}),
-			),
-		),
-		Effect.allWith({ concurrency: "unbounded", mode: "either" }),
-		Effect.map(Arr.getRights),
-	);
+			);
+		},
+		{ concurrency: "unbounded" },
+	).pipe(Effect.map(([_, registered]) => registered));
 
 	yield* Effect.log(
 		"Registered code action providers",

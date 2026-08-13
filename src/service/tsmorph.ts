@@ -1,12 +1,14 @@
+import * as Context from "effect/Context";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import { type Node, Project } from "ts-morph";
 import { asError } from "$/utils/error";
 
-export class TsMorph extends Effect.Service<TsMorph>()(
+export class TsMorph extends Context.Service<TsMorph>()(
 	"script-manager/tsmorph/TsMorph",
 	{
-		effect: Effect.gen(function* () {
+		make: Effect.gen(function* () {
 			const project = yield* Effect.try({
 				try() {
 					return new Project({ useInMemoryFileSystem: true });
@@ -22,6 +24,8 @@ export class TsMorph extends Effect.Service<TsMorph>()(
 		}),
 	},
 ) {
+	static readonly Default = Layer.effect(TsMorph, TsMorph.make);
+
 	static with = Effect.fn("use")(
 		<T>(run: (project: Project) => PromiseLike<T> | T) => {
 			return TsMorph.use((tsmorph) =>

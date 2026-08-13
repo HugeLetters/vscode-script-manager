@@ -1,6 +1,7 @@
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Match from "effect/Match";
 import { commands } from "vscode";
 import { CommandPrefix } from "$/config";
 import type { SharedRuntimeContext } from "$/runtime";
@@ -50,13 +51,20 @@ export namespace Command {
 					(editor) => {
 						const EditorLayer = Layer.provideMerge(
 							TextEditor.CurrentDirectoryLive,
-							TextEditor.Default(editor),
+							TextEditor.make(editor),
 						);
 						return command.task.pipe(Effect.provide([EditorLayer]), run);
 					},
 				);
 			});
 		},
+	);
+
+	export const registerAnyCommand = Match.type<AnyCommand>().pipe(
+		Match.tagsExhaustive({
+			Command: registerCommand,
+			TextCommand: registerTextCommand,
+		}),
 	);
 
 	export const execute = Effect.fn("execute")((command: string) => {

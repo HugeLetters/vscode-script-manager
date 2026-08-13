@@ -1,70 +1,61 @@
-import * as Path from "@effect/platform/Path";
+import * as Context from "effect/Context";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Path from "effect/Path";
 import type { Position, Selection, TextEditor as VsTextEditor } from "vscode";
 import { asError } from "$/utils/error";
-import { effectify } from "$/utils/promise";
 import { CurrentDirectory } from "../service/directory";
 
-interface TextEditorLiveConfig {
-	/** @private */
-	readonly service: VsTextEditor;
-}
+type TextEditorEditParams = Parameters<VsTextEditor["edit"]>;
+type TextEditorEditOptions = TextEditorEditParams[1];
 
-export class TextEditor extends Effect.Service<TextEditor>()(
+export class TextEditor extends Context.Service<TextEditor, VsTextEditor>()(
 	"script-manager/editor/TextEditor",
-	{
-		effect(editor: VsTextEditor) {
-			return Effect.succeed<TextEditorLiveConfig>({ service: editor });
-		},
-	},
+	{},
 ) {
-	use = Effect.fn("use")(
-		<T>(run: (editor: VsTextEditor) => Thenable<T> | PromiseLike<T> | T) => {
-			return Effect.tryPromise({
-				try: async () => {
-					return run(this.service);
-				},
-				catch(error) {
-					return new TextEditorError({ cause: error });
-				},
-			});
-		},
-	);
+	static readonly make = Layer.succeed(TextEditor);
 
-	edit = Effect.fn("edit")(
-		effectify(
-			this.service.edit,
-			(error) => new TextEditorError({ cause: error }),
-		),
-		Effect.flatMap((result) => {
-			if (result) {
-				return Effect.void;
-			}
+	static with = Effect.fn("with")(function* <T>(
+		run: (editor: VsTextEditor) => PromiseLike<T> | T,
+	) {
+		const editor = yield* TextEditor;
+		return yield* Effect.tryPromise({
+			try: async () => {
+				return run(editor);
+			},
+			catch(error) {
+				return new TextEditorError({ cause: error });
+			},
+		});
+	});
 
-			return new TextEditorError({ cause: "Failed to apply edits" });
-		}),
-	);
+	static edit = Effect.fn("edit")(function* (...args: TextEditorEditParams) {
+		const result = yield* TextEditor.with((editor) => editor.edit(...args));
+		if (result) {
+			return;
+		}
 
-	insert = Effect.fn("insert")(
-		(
-			location: Position,
-			value: string,
-			options?: Parameters<VsTextEditor["edit"]>[1],
-		) => {
-			return this.edit((b) => {
+		return yield* new TextEditorError({ cause: "Failed to apply edits" });
+	});
+
+	static insert = Effect.fn("insert")(
+		(location: Position, value: string, options?: TextEditorEditOptions) => {
+			return TextEditor.edit((b) => {
 				b.insert(location, value);
 			}, options);
 		},
 	);
 
-	get selection() {
-		return this.service.selection;
-	}
-	setSelection(selection: Selection) {
-		this.service.selection = selection;
-	}
+	static Selection = Effect.gen(function* () {
+		const editor = yield* TextEditor;
+		return editor.selection;
+	});
+
+	static setSelection = Effect.fn(function* (selection: Selection) {
+		const editor = yield* TextEditor;
+		editor.selection = selection;
+	});
 }
 
 export namespace TextEditor {
@@ -73,7 +64,7 @@ export namespace TextEditor {
 		Effect.gen(function* () {
 			const editor = yield* TextEditor;
 			const path = yield* Path.Path;
-			const editorPath = editor.service.document.uri.fsPath;
+			const editorPath = editor.document.uri.fsPath;
 			return path.dirname(editorPath);
 		}),
 	);

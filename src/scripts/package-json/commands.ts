@@ -1,4 +1,3 @@
-import * as Path from "@effect/platform/Path";
 import { pipe } from "effect";
 import * as Arr from "effect/Array";
 import * as Data from "effect/Data";
@@ -6,6 +5,7 @@ import * as Effect from "effect/Effect";
 import * as HashSet from "effect/HashSet";
 import * as Iterable from "effect/Iterable";
 import * as Option from "effect/Option";
+import * as Path from "effect/Path";
 import type { NewExpression } from "ts-morph";
 import { CommandPrefix } from "$/config";
 import { TsMorph } from "$/service/tsmorph";
@@ -37,7 +37,7 @@ export const GetCommands = Effect.gen(function* () {
 	const commandInitializers = yield* pipe(
 		commandElements,
 		Arr.map(getNodeNewExpressionInitializers),
-		Effect.allWith({ concurrency: "unbounded" }),
+		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 		Effect.map(Iterable.flatten<NewExpression>),
 	);
 
@@ -45,7 +45,7 @@ export const GetCommands = Effect.gen(function* () {
 		commandInitializers,
 		(items) => HashSet.make(...items),
 		Iterable.map(getCommandMetadata),
-		Effect.allWith({ concurrency: "unbounded" }),
+		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 	);
 });
 

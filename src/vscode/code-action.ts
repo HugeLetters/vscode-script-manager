@@ -1,6 +1,4 @@
-import { pipe } from "effect";
 import * as Arr from "effect/Array";
-import * as Cause from "effect/Cause";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Predicate from "effect/Predicate";
@@ -47,37 +45,26 @@ export namespace CodeAction {
 						provider.selector,
 						{
 							provideCodeActions(document, range, _context, token) {
-								const TokenCancellationEffect = createCancellationEffect(
-									token,
-								).pipe(
-									Effect.tapError(() =>
-										Effect.logWarning(
-											`Actions cancelled for provider: ${provider.id}`,
-										),
-									),
-								);
+								const TokenInterrupt = createTokenInterrupt(token);
 
-								return pipe(
-									provider.actions,
-									Arr.map((action) => {
-										return action
-											.task({
-												action: new VsCodeAction(action.title, action.kind),
-												document,
-												range,
-											})
-											.pipe(
-												Effect.tapError((cause) =>
-													Effect.logError(
-														`Action "${action.title}" of provider ${provider.id} failed`,
-														cause,
-													),
+								return Effect.forEach(provider.actions, (action) => {
+									return action
+										.task({
+											action: new VsCodeAction(action.title, action.kind),
+											document,
+											range,
+										})
+										.pipe(
+											Effect.tapError((cause) =>
+												Effect.logError(
+													`Action "${action.title}" of provider ${provider.id} failed`,
+													cause,
 												),
-												Effect.orElseSucceed(() => null),
-											);
-									}),
-									Effect.allWith(),
-									Effect.raceFirst(TokenCancellationEffect),
+											),
+											Effect.orElseSucceed(() => null),
+										);
+								}).pipe(
+									Effect.raceFirst(TokenInterrupt),
 									Effect.map(Arr.filter(Predicate.isNotNull)),
 									run,
 								);
@@ -95,15 +82,15 @@ export namespace CodeAction {
 		);
 	}
 
-	function createCancellationEffect(token: CancellationToken) {
-		return Effect.async<never, Cause.InterruptedException>((resume) => {
+	function createTokenInterrupt(token: CancellationToken) {
+		return Effect.callback<never, never>((resume) => {
 			if (token.isCancellationRequested) {
-				resume(new Cause.InterruptedException());
+				resume(Effect.interrupt);
 				return;
 			}
 
 			const disposable = token.onCancellationRequested(() => {
-				resume(new Cause.InterruptedException());
+				resume(Effect.interrupt);
 				cleanup();
 			});
 

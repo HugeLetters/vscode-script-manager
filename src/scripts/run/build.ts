@@ -1,27 +1,22 @@
-import { Command, Options } from "@effect/cli";
-import * as BunContext from "@effect/platform-bun/BunContext";
 import * as BunRuntime from "@effect/platform-bun/BunRuntime";
-import { argv } from "bun";
+import * as BunServices from "@effect/platform-bun/BunServices";
 import * as Effect from "effect/Effect";
-import * as Fn from "effect/Function";
+import * as Command from "effect/unstable/cli/Command";
+import * as Flag from "effect/unstable/cli/Flag";
 import { Build } from "../build";
 
 const build = Command.make(
 	"build",
 	{
-		watch: Options.boolean("watch"),
-		release: Options.boolean("release"),
+		watch: Flag.boolean("watch"),
+		release: Flag.boolean("release"),
 	},
 	({ watch, release }) => Build({ watch, release }),
 );
 
 build.pipe(
-	Command.run({
-		name: "Build CLI",
-		version: "v1.0.0",
-	}),
-	Fn.apply(argv),
-	Effect.provide([BunContext.layer]),
+	Command.run({ version: "v1.0.0" }),
+	Effect.provide(BunServices.layer),
 	Effect.scoped,
 	BunRuntime.runMain,
 );

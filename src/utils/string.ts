@@ -13,7 +13,7 @@ export namespace StringUtils {
 		return pipe(
 			chunks,
 			Arr.zipWith(template, (chunk, template) =>
-				Predicate.isNotNullable(chunk) ? `${template}${chunk}` : template,
+				Predicate.isNotNull(chunk) ? `${template}${chunk}` : template,
 			),
 			Arr.join(""),
 			Str.concat(Arr.last(template).pipe(Option.getOrElse(() => ""))),
@@ -21,6 +21,6 @@ export namespace StringUtils {
 	}
 
 	export function concat(...chunks: ReadonlyArray<string | null>) {
-		return pipe(chunks, Iterable.filter(Predicate.isNotNullable), Arr.join(""));
+		return pipe(chunks, Iterable.filter(Predicate.isNotNull), Arr.join(""));
 	}
 }

@@ -1,10 +1,10 @@
-import * as FileSystem from "@effect/platform/FileSystem";
-import * as Path from "@effect/platform/Path";
-import * as BunContext from "@effect/platform-bun/BunContext";
+import * as BunServices from "@effect/platform-bun/BunServices";
 import * as Console from "effect/Console";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
+import * as Path from "effect/Path";
 import * as SynchronizedRef from "effect/SynchronizedRef";
 import { context, type Plugin } from "esbuild";
 import { TsMorphProjectLive } from "./package-json/utils/tsmorph";
@@ -16,7 +16,7 @@ const Outdir = "dist";
 const ReleasePlugin = makePlugin({
 	name: "release",
 	onStart: Release.Prebuild.pipe(
-		Effect.provide([Layer.provideMerge(TsMorphProjectLive, BunContext.layer)]),
+		Effect.provide([Layer.provideMerge(TsMorphProjectLive, BunServices.layer)]),
 	),
 	onEnd: () => Release.Postbuild,
 });
@@ -33,9 +33,9 @@ const BuildTimePlugin = Effect.fn("BuildTimePlugin ")(function* () {
 			yield* Effect.logInfo("Build started");
 		}),
 		onEnd: Effect.fnUntraced(function* () {
-			const start = yield* startTime;
+			const start = yield* SynchronizedRef.get(startTime);
 			const now = yield* DateTime.now;
-			const elapsed = now.epochMillis - start.epochMillis;
+			const elapsed = now.epochMilliseconds - start.epochMilliseconds;
 			// TODO master | more noticeable message | by Evgenii Perminov at Mon, 06 Apr 2026 20:47:37 GMT
 			yield* Effect.logInfo(`Build completed in ${elapsed}ms`);
 		}),

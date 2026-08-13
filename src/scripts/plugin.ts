@@ -1,5 +1,6 @@
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
+import * as Fiber from "effect/Fiber";
 import * as FiberHandle from "effect/FiberHandle";
 import type { BuildResult, OnEndResult, OnStartResult, Plugin } from "esbuild";
 
@@ -23,7 +24,7 @@ export const makePlugin = Effect.fn("makePlugin")(function* <R>(
 		setup(build) {
 			build.onStart(() => {
 				return config.onStart?.pipe(
-					Effect.catchAll((e) => {
+					Effect.catch((e) => {
 						if (e instanceof PluginStartError) {
 							return Effect.succeed(e);
 						}
@@ -31,12 +32,13 @@ export const makePlugin = Effect.fn("makePlugin")(function* <R>(
 						return Effect.logFatal(e).pipe(Effect.andThen(Effect.fail(null)));
 					}),
 					run,
+					Fiber.join,
 					Effect.runPromise,
 				);
 			});
 			build.onEnd((result) => {
 				return config.onEnd?.(result).pipe(
-					Effect.catchAll((e) => {
+					Effect.catch((e) => {
 						if (e instanceof PluginEndError) {
 							return Effect.succeed(e);
 						}
@@ -44,6 +46,7 @@ export const makePlugin = Effect.fn("makePlugin")(function* <R>(
 						return Effect.logFatal(e).pipe(Effect.andThen(Effect.fail(null)));
 					}),
 					run,
+					Fiber.join,
 					Effect.runPromise,
 				);
 			});

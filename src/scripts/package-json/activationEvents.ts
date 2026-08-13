@@ -22,7 +22,7 @@ export const GetActivationEvents = Effect.gen(function* () {
 		commands,
 		(events) => new Set(events),
 		Arr.fromIterable,
-		Arr.sortBy(Order.string),
+		Arr.sortBy(Order.String),
 	);
 
 	yield* Effect.log("Declared activation events", activationEvents);
