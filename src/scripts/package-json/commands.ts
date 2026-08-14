@@ -2,7 +2,6 @@ import { pipe } from "effect";
 import * as Arr from "effect/Array";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
-import * as HashSet from "effect/HashSet";
 import * as Iterable from "effect/Iterable";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
@@ -43,7 +42,7 @@ export const GetCommands = Effect.gen(function* () {
 
 	return yield* pipe(
 		commandInitializers,
-		(items) => HashSet.make(...items),
+		Arr.dedupe,
 		Iterable.map(getCommandMetadata),
 		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 	);
