@@ -19,7 +19,7 @@
 		"build": "bun run src/scripts/run/build.ts",
 		"release": "bun run src/scripts/run/release.ts",
 		"dev": "bun run build --watch --release",
-		"package": "vsce package",
+		"package": "vsce package --no-dependencies",
 		"format": "biome format --write",
 		"lint": "biome check",
 		"typecheck": "tsc"
@@ -37,7 +37,7 @@
 		"@types/bun": "^1.3.3",
 		"@types/node": "^22",
 		"@types/vscode": "^1.105.0",
-		"@vscode/vsce": "^3.7.0",
+		"@vscode/vsce": "^3.9.2",
 		"esbuild": "^0.25.10",
 		"typescript": "^5.9.3"
 	},
@@ -53,12 +53,12 @@
 		},
 		"commands": [
 			{
-				"command": "script-manager.rename-tab",
-				"title": "Rename Tab"
-			},
-			{
 				"command": "script-manager.insert-todo-comment",
 				"title": "Todo Comment"
+			},
+			{
+				"command": "script-manager.rename-tab",
+				"title": "Rename Tab"
 			}
 		]
 	},
