@@ -1,6 +1,7 @@
 import * as Arr from "effect/Array";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
+import * as Fiber from "effect/Fiber";
 import type { ExtensionContext } from "vscode";
 import { RegisterCodeActionProviders } from "./code-actions";
 import { RegisterCommands } from "./commands";
@@ -20,8 +21,7 @@ export function activate(context: ExtensionContext) {
 		const deferredDisposables =
 			yield* Deferred.make<Effect.Success<typeof RegisterAll>>();
 
-		// TODO master | this fiber is only killed on process exit, not when deactive requested explicitly | by Evgenii Perminov at Mon, 06 Apr 2026 21:13:25 GMT
-		yield* RegisterAll.pipe(
+		const fiber = yield* RegisterAll.pipe(
 			Effect.flatMap((v) => Deferred.succeed(deferredDisposables, v)),
 			Effect.andThen(Effect.never),
 			Effect.scoped,
@@ -30,7 +30,11 @@ export function activate(context: ExtensionContext) {
 		);
 
 		const commands = yield* Deferred.await(deferredDisposables);
-		context.subscriptions.push(...commands);
+		context.subscriptions.push(...commands, {
+			dispose() {
+				Effect.runFork(Fiber.interrupt(fiber));
+			},
+		});
 	}).pipe(
 		Effect.provide(SharedRuntimeLive),
 		Effect.tapCause(Effect.logFatal),
