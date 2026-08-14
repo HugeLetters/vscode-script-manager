@@ -5,30 +5,26 @@ import * as Layer from "effect/Layer";
 import { type OutputChannel as VsOutputChannel, window } from "vscode";
 import { ConsoleUtils } from "$/utils/console";
 
-// TODO master | leaky lifecycle, should be created in activation event | by Evgenii Perminov at Mon, 06 Apr 2026 20:53:56 GMT
-export const MainOutputChannel = window.createOutputChannel("Script Manager");
-
 export class OutputChannel extends Context.Service<OutputChannel>()(
 	"script-manager/logger/OutputChannel",
 	{
-		make: Effect.succeed(MainOutputChannel),
+		make: Effect.sync(() => window.createOutputChannel("Script Manager")),
 	},
 ) {
 	static readonly Default = Layer.effect(OutputChannel, OutputChannel.make);
 }
 
-function outputChannelConsole(channel: VsOutputChannel): Console.Console {
+export function createChannelConsole(
+	channel: VsOutputChannel,
+): Console.Console {
 	const console = ConsoleUtils.createConsole((message) =>
 		channel.append(message),
 	);
-	return Object.assign(console, {
-		clear() {
-			channel.clear();
-		},
-	});
+	console.clear = () => channel.clear();
+	return console;
 }
 
-export const VsConsoleLive = Layer.succeed(
+export const ChannelConsole = Layer.effect(
 	Console.Console,
-	outputChannelConsole(MainOutputChannel),
+	Effect.map(OutputChannel, createChannelConsole),
 );

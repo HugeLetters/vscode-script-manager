@@ -4,11 +4,11 @@ import * as Fiber from "effect/Fiber";
 import * as FiberSet from "effect/FiberSet";
 import * as Layer from "effect/Layer";
 import * as Logger from "effect/Logger";
-import { OutputChannel, VsConsoleLive } from "$/vscode/console";
+import { ChannelConsole, OutputChannel } from "$/vscode/console";
 
 export const SharedRuntimeLive = Layer.mergeAll(
 	Logger.layer([Logger.consolePretty()]),
-	VsConsoleLive,
+	ChannelConsole,
 	NodeServices.layer,
 ).pipe(Layer.provideMerge(OutputChannel.Default));
 
