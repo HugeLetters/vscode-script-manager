@@ -22,7 +22,7 @@ export const RegisterCommands = Effect.gen(function* () {
 			);
 		},
 		{ concurrency: "unbounded" },
-	).pipe(Effect.map(([_, registered]) => registered));
+	).pipe(Effect.map(([registered]) => registered));
 
 	yield* Effect.log(
 		"Registered commands",

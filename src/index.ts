@@ -1,4 +1,4 @@
-import * as Arr from "effect/Array";
+import * as Array_ from "effect/Array";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
@@ -12,7 +12,7 @@ const RegisterAll = Effect.all(
 	// TODO master | more aggressively disclose register failure | by Evgenii Perminov at Mon, 06 Apr 2026 21:04:52 GMT
 	[RegisterCommands, RegisterCodeActionProviders],
 	{ concurrency: "unbounded" },
-).pipe(Effect.map(Arr.flatten));
+).pipe(Effect.map(Array_.flatten));
 
 export function activate(context: ExtensionContext) {
 	return Effect.gen(function* () {

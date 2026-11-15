@@ -1,5 +1,5 @@
 import * as Config from "effect/Config";
 
-export const CommandPrefix = Config.string("command-prefix").pipe(
+export const CommandPrefix = Config.String("command-prefix").pipe(
 	Config.withDefault("script-manager"),
 );

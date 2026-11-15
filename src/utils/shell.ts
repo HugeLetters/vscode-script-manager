@@ -1,12 +1,12 @@
-import * as Arr from "effect/Array";
+import * as Array_ from "effect/Array";
 import * as Console from "effect/Console";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";
+import type * as ChildProcess from "effect/process/ChildProcess";
+import * as ChildProcessSpawner from "effect/process/ChildProcessSpawner";
 import * as Stream from "effect/Stream";
-import * as Str from "effect/String";
-import type * as ChildProcess from "effect/unstable/process/ChildProcess";
-import * as ChildProcessSpawner from "effect/unstable/process/ChildProcessSpawner";
+import * as String_ from "effect/String";
 import { StringUtils } from "$/utils/string";
 
 export class CommandError extends Data.TaggedError("CommandError")<{
@@ -23,7 +23,7 @@ export namespace CommandUtils {
 			return `${format(piped.left)} | ${format(piped.right)}`;
 		}),
 		Match.tag("StandardCommand", (command) => {
-			if (Arr.isReadonlyArrayEmpty(command.args)) {
+			if (Array_.isReadonlyArrayEmpty(command.args)) {
 				return command.command;
 			}
 
@@ -41,7 +41,7 @@ export namespace CommandUtils {
 		yield* Effect.gen(function* () {
 			const logStdout = process.stdout.pipe(
 				Stream.decodeText(),
-				Stream.map(Str.trim),
+				Stream.map(String_.trim),
 				Stream.mapEffect(Effect.logInfo),
 				Stream.runDrain,
 			);
@@ -49,7 +49,7 @@ export namespace CommandUtils {
 			let firstChunk = true;
 			const logStderr = process.stderr.pipe(
 				Stream.decodeText(),
-				Stream.map(Str.trim),
+				Stream.map(String_.trim),
 				Stream.mapEffect((chunk) => {
 					if (firstChunk) {
 						firstChunk = false;

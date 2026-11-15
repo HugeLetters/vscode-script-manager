@@ -1,4 +1,4 @@
-import * as Arr from "effect/Array";
+import * as Array_ from "effect/Array";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Predicate from "effect/Predicate";
@@ -65,13 +65,13 @@ export namespace CodeAction {
 										);
 								}).pipe(
 									Effect.raceFirst(TokenInterrupt),
-									Effect.map(Arr.filter(Predicate.isNotNull)),
+									Effect.map(Array_.filter(Predicate.isNotNull)),
 									run,
 								);
 							},
 						},
 						{
-							providedCodeActionKinds: Arr.map(
+							providedCodeActionKinds: Array_.map(
 								provider.actions,
 								(action) => action.kind,
 							),

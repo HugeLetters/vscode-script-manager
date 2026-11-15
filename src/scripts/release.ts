@@ -2,21 +2,46 @@ import { pipe } from "effect";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
+import * as ChildProcess from "effect/process/ChildProcess";
 import * as Schema from "effect/Schema";
-import * as ChildProcess from "effect/unstable/process/ChildProcess";
 import { CommandUtils } from "$/utils/shell";
 import { GetActivationEvents } from "./package-json/activationEvents";
 import { GetContributes } from "./package-json/contributes";
 import { PackageJson } from "./package-json/schema";
+
+/** `value` with object keys in the order they have in `reference`; new keys go last. */
+function withKeyOrderOf(reference: unknown, value: unknown): unknown {
+	if (Array.isArray(value)) {
+		const ref = Array.isArray(reference) ? reference : [];
+		return value.map((item, i) => withKeyOrderOf(ref[i], item));
+	}
+	if (typeof value !== "object" || value === null) return value;
+
+	const ref =
+		typeof reference === "object" &&
+		reference !== null &&
+		!Array.isArray(reference)
+			? (reference as Record<string, unknown>)
+			: {};
+	const entries = Object.entries(value);
+	const known = Object.keys(ref).filter((key) => key in value);
+	const rest = entries.map(([key]) => key).filter((key) => !(key in ref));
+	return Object.fromEntries(
+		[...known, ...rest].map((key) => [
+			key,
+			withKeyOrderOf(ref[key], (value as Record<string, unknown>)[key]),
+		]),
+	);
+}
 
 const UpdatePackageJson = Effect.gen(function* () {
 	yield* Effect.logInfo("Updating package.json");
 
 	const fs = yield* FileSystem.FileSystem;
 
-	const PackageJsonContent = yield* fs
-		.readFileString("package.json")
-		.pipe(Effect.flatMap(Schema.decodeUnknownEffect(PackageJson)));
+	const original = yield* fs.readFileString("package.json");
+	const PackageJsonContent =
+		yield* Schema.decodeUnknownEffect(PackageJson)(original);
 
 	const contributes = yield* GetContributes;
 	const activationEvents = yield* GetActivationEvents;
@@ -34,11 +59,18 @@ const UpdatePackageJson = Effect.gen(function* () {
 			};
 		},
 		Schema.encodeEffect(PackageJson),
-		Effect.flatMap((f) => fs.writeFileString("package.json", f)),
+		Effect.map((encoded) =>
+			JSON.stringify(
+				withKeyOrderOf(JSON.parse(original), JSON.parse(encoded)),
+				null,
+				"\t",
+			),
+		),
+		Effect.flatMap((f) => fs.writeFileString("package.json", `${f}\n`)),
 	);
 
 	yield* pipe(
-		ChildProcess.make("bun", ["run", "format", "package.json"]),
+		ChildProcess.make("bunx", ["biome", "format", "--write", "package.json"]),
 		CommandUtils.execute,
 		Effect.catch((err) =>
 			Effect.logWarning("Failed to format package.json", err),

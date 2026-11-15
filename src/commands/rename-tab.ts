@@ -1,6 +1,6 @@
 import * as Path from "node:path";
 import * as Effect from "effect/Effect";
-import * as Record from "effect/Record";
+import * as Record_ from "effect/Record";
 import { ConfigurationTarget, type Uri, window, workspace } from "vscode";
 import { Command } from "$/vscode/command";
 
@@ -41,7 +41,7 @@ export const RenameTab = new Command.Command({
 		const previousPatterns =
 			config.get<Record<string, string>>("patterns") ?? {};
 
-		const nextPatterns = Record.set(
+		const nextPatterns = Record_.set(
 			previousPatterns,
 			patternKey,
 			finalLabel || undefined,

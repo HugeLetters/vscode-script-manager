@@ -1,9 +1,10 @@
 import * as Schema from "effect/Schema";
 
+/** A struct that keeps unknown keys on decode and encode (e.g. the rest of package.json). */
 function looseStruct<Fields extends Schema.Struct.Fields>(fields: Fields) {
-	return Schema.Struct(fields).pipe(
-		Schema.annotate({ parseOptions: { onExcessProperty: "preserve" } }),
-	);
+	return Schema.StructWithRest(Schema.Struct(fields), [
+		Schema.Record(Schema.String, Schema.Unknown),
+	]);
 }
 
 const CommandDeclaration = looseStruct({

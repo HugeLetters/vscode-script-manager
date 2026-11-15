@@ -1,5 +1,5 @@
 import { pipe } from "effect";
-import * as Arr from "effect/Array";
+import * as Array_ from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Order from "effect/Order";
 import { GetActionDeclarations } from "./actions-declaration";
@@ -9,20 +9,20 @@ export const GetActivationEvents = Effect.gen(function* () {
 		[
 			GetActionDeclarations.pipe(
 				Effect.map(
-					Arr.flatMap((action) =>
+					Array_.flatMap((action) =>
 						action.languages.map((language) => `onLanguage:${language}`),
 					),
 				),
 			),
 		],
 		{ concurrency: "unbounded" },
-	).pipe(Effect.map(Arr.flatten));
+	).pipe(Effect.map(Array_.flatten));
 
 	const activationEvents = pipe(
 		commands,
 		(events) => new Set(events),
-		Arr.fromIterable,
-		Arr.sortBy(Order.String),
+		Array_.fromIterable,
+		Array_.sortBy(Order.String),
 	);
 
 	yield* Effect.log("Declared activation events", activationEvents);

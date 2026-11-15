@@ -61,7 +61,7 @@ export const CreateGetter = new CodeAction({
 		action.edit = edit;
 
 		return action;
-	}, Effect.provide(TsMorph.Default)),
+	}, Effect.provide(TsMorph.inMemory)),
 });
 
 export const CreateGetterAndSetter = new CodeAction({
@@ -113,7 +113,7 @@ export const CreateGetterAndSetter = new CodeAction({
 		action.edit = edit;
 
 		return action;
-	}, Effect.provide(TsMorph.Default)),
+	}, Effect.provide(TsMorph.inMemory)),
 });
 
 export const CreateSetterFromGetter = new CodeAction({
@@ -167,7 +167,7 @@ export const CreateSetterFromGetter = new CodeAction({
 		action.edit = edit;
 
 		return action;
-	}, Effect.provide(TsMorph.Default)),
+	}, Effect.provide(TsMorph.inMemory)),
 });
 
 function isCursorOnName(

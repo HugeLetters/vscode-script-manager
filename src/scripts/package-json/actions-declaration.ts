@@ -1,5 +1,5 @@
 import { pipe } from "effect";
-import * as Arr from "effect/Array";
+import * as Array_ from "effect/Array";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as HashSet from "effect/HashSet";
@@ -11,8 +11,6 @@ import {
 	type ObjectLiteralExpression,
 	SyntaxKind,
 } from "ts-morph";
-import { TsMorph } from "$/service/tsmorph";
-import type { CodeAction } from "$/vscode/code-action";
 import {
 	asStringLiteral,
 	getNodeLocator,
@@ -23,7 +21,9 @@ import {
 	getStringLiteralProperty,
 	getVariableArrayElements,
 	getVariableValue,
-} from "./utils/tsmorph";
+	TsMorph,
+} from "$/service/tsmorph";
+import type { CodeAction } from "$/vscode/code-action";
 
 const CodeActionProvidersVariable = "CodeActionProviders";
 
@@ -52,7 +52,7 @@ export const GetActionDeclarations = Effect.gen(function* () {
 
 	const providerInitializers = yield* pipe(
 		providerElements,
-		Arr.map(getNodeNewExpressionInitializers),
+		Array_.map(getNodeNewExpressionInitializers),
 		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 		Effect.map(Iterable.flatten<NewExpression>),
 	);
@@ -71,9 +71,9 @@ const getActionProviderMetadata = Effect.fn("getActionProviderMetadata")(
 			getObjectLiteralFirstArg(provider),
 			Effect.flatMap(
 				Effect.fnUntraced(function* (arg) {
-					const id = yield* getStringLiteralProperty<ProviderProperty>(
+					const id = yield* getStringLiteralProperty(
 						arg,
-						"id",
+						"id" satisfies ProviderProperty,
 					);
 					const languages = yield* getSelectorLanguages(arg, "selector");
 
@@ -107,7 +107,7 @@ const getSelectorLanguages = Effect.fn("getSelectorLanguages")(function* (
 
 	const values = yield* pipe(
 		elements,
-		Arr.map(
+		Array_.map(
 			Effect.fnUntraced(function* (element) {
 				const stringVal = yield* asStringLiteral(element).pipe(Effect.option);
 				if (Option.isSome(stringVal)) {
@@ -120,7 +120,7 @@ const getSelectorLanguages = Effect.fn("getSelectorLanguages")(function* (
 						"language",
 					);
 					return Option.match(language, {
-						onNone: Arr.empty,
+						onNone: Array_.empty,
 						onSome: (value) => [value],
 					});
 				}

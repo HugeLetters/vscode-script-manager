@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   release:
@@ -26,13 +26,13 @@ jobs:
         run: bun run build
 
       - name: Package extension
-# TODO master | should this run release instead? possibly stale package.json otherwise | by Evgenii Perminov at Mon, 06 Apr 2026 21:20:24 GMT
+        # TODO master | should this run release instead? possibly stale package.json otherwise | by Evgenii Perminov at Mon, 06 Apr 2026 21:20:24 GMT
         run: bun run package
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: '*.vsix'
+          files: "*.vsix"
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

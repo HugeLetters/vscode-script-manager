@@ -1,5 +1,5 @@
 import { pipe } from "effect";
-import * as Arr from "effect/Array";
+import * as Array_ from "effect/Array";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Iterable from "effect/Iterable";
@@ -7,9 +7,6 @@ import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import type { NewExpression } from "ts-morph";
 import { CommandPrefix } from "$/config";
-import { TsMorph } from "$/service/tsmorph";
-import type { Command } from "$/vscode/command";
-import type { CommandDeclaration } from "./schema";
 import {
 	getNodeLocator,
 	getNodeNewExpressionInitializers,
@@ -18,7 +15,10 @@ import {
 	getStringLiteralProperty,
 	getVariableArrayElements,
 	getVariableValue,
-} from "./utils/tsmorph";
+	TsMorph,
+} from "$/service/tsmorph";
+import type { Command } from "$/vscode/command";
+import type { CommandDeclaration } from "./schema";
 
 const CommandsVariable = "Commands";
 
@@ -35,14 +35,15 @@ export const GetCommands = Effect.gen(function* () {
 
 	const commandInitializers = yield* pipe(
 		commandElements,
-		Arr.map(getNodeNewExpressionInitializers),
+		Array_.map(getNodeNewExpressionInitializers),
 		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 		Effect.map(Iterable.flatten<NewExpression>),
 	);
 
 	return yield* pipe(
 		commandInitializers,
-		Arr.dedupe,
+		// By reference: Effect 4's structural equality walks the whole ts-morph node graph.
+		Array_.dedupeWith((a, b) => a === b),
 		Iterable.map(getCommandMetadata),
 		(effects) => Effect.all(effects, { concurrency: "unbounded" }),
 	);
@@ -56,14 +57,17 @@ const getCommandMetadata = Effect.fn("getCommandMetadata")(function* (
 		getObjectLiteralFirstArg(command),
 		Effect.flatMap(
 			Effect.fnUntraced(function* (arg) {
-				const id = yield* getStringLiteralProperty<CommandProperty>(arg, "id");
-				const name = yield* getStringLiteralProperty<CommandProperty>(
+				const id = yield* getStringLiteralProperty(
 					arg,
-					"name",
+					"id" satisfies CommandProperty,
 				);
-				const when = yield* getOptionalStringLiteralProperty<CommandProperty>(
+				const name = yield* getStringLiteralProperty(
 					arg,
-					"when",
+					"name" satisfies CommandProperty,
+				);
+				const when = yield* getOptionalStringLiteralProperty(
+					arg,
+					"when" satisfies CommandProperty,
 				);
 
 				const result: CommandDeclaration = {
